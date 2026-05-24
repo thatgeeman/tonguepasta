@@ -1,6 +1,17 @@
-# tonguepasta😛🍝
+# tonguepasta 😛🍝
 
-Hold **Right Ctrl** to record your voice, release to transcribe and paste - works in any Windows application.
+Hold **Right Ctrl**, speak, release — transcribed text is pasted wherever your cursor is. Works in any app on Windows, macOS, and Linux.
+
+No subscription. No cloud lock-in. Bring your own API key, or run fully local with Ollama.
+
+## Features
+
+- **Hold to record** — hold Right Ctrl to record, release to transcribe and paste. Works in any app.
+- **Improve modes** — prefix your speech with `improve grammar`, `improve clarity`, `improve tone`, or `improve caveman` to rewrite text as you speak it, not just transcribe it.
+- **Custom vocabulary** — teach it domain terms and fix Whisper mishearings with a plain text file. No restart needed.
+- **Multi-provider** — OpenAI, Azure OpenAI, or any OpenAI-compatible endpoint (Ollama, LM Studio, etc.). Switch live from the tray.
+- **Stealth mode** — hides all visual overlays for distraction-free use.
+- **Lock n Load** — toggle-to-record mode for longer dictation sessions.
 
 ## Prerequisites
 
