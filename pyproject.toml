@@ -1,0 +1,16 @@
+[project]
+name = "tonguepasta"
+version = "1.0.0"
+description = "Hold Right Ctrl to record your voice, release to transcribe and paste - works in any app. Supports OpenAI, Azure OpenAI, and any OpenAI-compatible provider."
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.28.1",
+    "numpy>=2.2.0",
+    "openai>=1.30.0",
+    "pynput>=1.8.1",
+    "pyperclip>=1.9.0",
+    "python-dotenv>=1.0.0",
+    "sounddevice>=0.5.0",
+    "Pillow>=10.0.0",
+    "pystray>=0.19.0",
+]

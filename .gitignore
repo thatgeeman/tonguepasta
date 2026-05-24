@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+src/build/
+src/dist/
+*.log
+logs/
+test_audio/
+*.spec.bak
+.venv/
+venv/

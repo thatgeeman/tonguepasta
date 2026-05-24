@@ -1,0 +1,18 @@
+# Vocabulary for voice transcription correction.
+# One term per line. Lines starting with # are ignored.
+#
+# Whisper will be biased toward these spellings during transcription,
+# and an LLM corrector will fix any remaining mishearings afterward.
+#
+# Tips:
+#   - Include acronyms, proper nouns, and technical terms Whisper gets wrong.
+#   - For multi-word phrases, write them on one line (e.g. "key vault").
+#   - Order doesn't matter.
+#
+# Mishearing aliases (hard-substitute regardless of context):
+#   CorrectWord = mishearing1, mishearing2
+#   Example = Egg sample, Egg ample
+
+# --- Add your terms below ---
+GitHub
+PowerShell
