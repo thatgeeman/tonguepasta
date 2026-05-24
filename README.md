@@ -20,11 +20,23 @@ Hold **Right Ctrl** to record your voice, release to transcribe and paste - work
   sudo apt install libayatana-appindicator3-1 libportaudio2
   ```
 
+## Download
+
+Grab the latest zip for your platform from the [Releases](../../releases) page, extract it, then follow the setup steps below.
+
 ## Setup
 
-1. Place `tonguepasta.exe`, `.env`, and `vocabulary.txt` in the same folder.
-2. Copy `.env.example` to `.env` and fill in your API key and provider.
-3. Double-click `tonguepasta.exe` to run.
+1. Copy `.env.example` to `.env` and fill in your API key and provider.
+2. Run the app:
+
+**Windows** — double-click `tonguepasta.exe`.
+
+**macOS** — right-click → Open the first time (Gatekeeper will block a straight double-click on unsigned binaries). After that, double-click works normally.
+
+**Linux** — make it executable and run:
+```
+chmod +x tonguepasta && ./tonguepasta
+```
 
 ## Usage
 

@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            binary: tonguepasta.exe
+            hidden: pynput.keyboard._win32 pynput.mouse._win32
+          - os: macos-latest
+            platform: macos
+            binary: tonguepasta
+            hidden: pynput.keyboard._darwin pynput.mouse._darwin
+          - os: ubuntu-latest
+            platform: linux
+            binary: tonguepasta
+            hidden: pynput.keyboard._xorg pynput.mouse._xorg
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libayatana-appindicator3-1 libportaudio2
+
+      - name: Install system deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install portaudio
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build
+        shell: bash
+        run: |
+          HIDDEN_ARGS=""
+          for h in ${{ matrix.hidden }}; do
+            HIDDEN_ARGS="$HIDDEN_ARGS --hidden-import $h"
+          done
+          cd src
+          python -m PyInstaller --onefile --noconsole \
+            $HIDDEN_ARGS \
+            --hidden-import corrector \
+            --name tonguepasta \
+            main.py
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Copy-Item .env.example src/dist/.env.example
+          Copy-Item vocabulary.txt src/dist/vocabulary.txt
+          Compress-Archive -Path src/dist/tonguepasta.exe, src/dist/.env.example, src/dist/vocabulary.txt -DestinationPath tonguepasta-windows.zip
+
+      - name: Package (macOS / Linux)
+        if: runner.os != 'Windows'
+        run: |
+          cp .env.example src/dist/.env.example
+          cp vocabulary.txt src/dist/vocabulary.txt
+          cd src/dist
+          zip ../../../tonguepasta-${{ matrix.platform }}.zip tonguepasta .env.example vocabulary.txt
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tonguepasta-${{ matrix.platform }}.zip
