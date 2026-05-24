@@ -35,7 +35,20 @@ The app runs silently in the system tray (no console window).
 | Hold Right Ctrl + speak + release | Transcribed text is pasted at the cursor |
 | Shift + Right Ctrl | Lock n Load - toggle recording on/off |
 
-Right-click the tray icon to access settings and switch providers.
+Right-click the tray icon to access all settings.
+
+## Tray menu
+
+| Item | What it does |
+|------|-------------|
+| **Lock n Load** | Toggle continuous recording on/off (instead of hold-to-record). Shift + Right Ctrl does the same from the keyboard. |
+| **Mode** | Switch transcription mode: Normal, Markdown, or one of the Improve presets (Grammar, Professional, Concise, Casual, Caveman). |
+| **Provider** | Switch AI provider live without restarting. |
+| **Stealth mode** | Hides the status overlay — no visual feedback while recording or transcribing. |
+| **Focus source window** | When enabled (default), focus returns to the original window after pasting. Disable if you want focus to stay where it lands. |
+| **Configure...** | Opens `.env` in a text editor. Save the file, then use Reload config to apply changes. |
+| **Reload config** | Reloads `.env` without restarting — use this after editing your API key or switching provider in the file. |
+| **Quit** | Exit the app. |
 
 ## Provider configuration
 
