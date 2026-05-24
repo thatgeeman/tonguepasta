@@ -64,14 +64,14 @@ def _draw_icon(bg: str, fg: str = "white", size: int = 64) -> Image.Image:
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle([0, 0, size - 1, size - 1], radius=size // 6, fill=bg)
-    emoji_font = _load_emoji_font(int(size * 0.34))
+    emoji_font = _load_emoji_font(int(size * 0.62))
     if emoji_font:
-        for i, ch in enumerate(["😛", "🍝"]):
-            bbox = d.textbbox((0, 0), ch, font=emoji_font, embedded_color=True)
-            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            x = (size - tw) // 2 - bbox[0]
-            y = int(size * 0.04) + i * (size // 2) + (size // 4 - th // 2) - bbox[1]
-            d.text((x, y), ch, font=emoji_font, embedded_color=True)
+        ch = "😛"
+        bbox = d.textbbox((0, 0), ch, font=emoji_font, embedded_color=True)
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        x = (size - tw) // 2 - bbox[0]
+        y = (size - th) // 2 - bbox[1]
+        d.text((x, y), ch, font=emoji_font, embedded_color=True)
     else:
         font = _load_font(int(size * 0.42))
         bbox = d.textbbox((0, 0), "TP", font=font)
