@@ -1,4 +1,4 @@
-# tonguepasta
+# tonguepasta😛🍝
 
 Hold **Right Ctrl** to record your voice, release to transcribe and paste - works in any Windows application.
 
