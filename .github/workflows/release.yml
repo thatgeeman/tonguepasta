@@ -74,7 +74,7 @@ jobs:
           cp .env.example src/dist/.env.example
           cp vocabulary.txt src/dist/vocabulary.txt
           cd src/dist
-          zip ../../../tonguepasta-${{ matrix.platform }}.zip tonguepasta .env.example vocabulary.txt
+          zip ../../tonguepasta-${{ matrix.platform }}.zip tonguepasta .env.example vocabulary.txt
 
       - name: Upload to release
         uses: softprops/action-gh-release@v2
