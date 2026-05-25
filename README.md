@@ -25,6 +25,7 @@ No subscription. No cloud lock-in. Bring your own API key, or run fully local wi
 - Right Ctrl is the hotkey — if your keyboard lacks it, remap a key via Karabiner-Elements
 
 **Linux (X11 only)**
+- Requires **glibc 2.38+** (Ubuntu 23.10 / Debian 13 or newer). On older systems, build from source.
 - Wayland is not supported; run under X11 or XWayland (`DISPLAY=:0 ./tonguepasta`)
 - Install system packages before running from source:
   ```
