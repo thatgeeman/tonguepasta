@@ -129,6 +129,44 @@ def _launch_corgi(root, word):
     root.after(_CORGI_FPS, step)
 
 
+def _show_startup_banner(root):
+    font = tkfont.Font(family=_FONT_FAMILY, size=_FONT_SIZE, weight="bold")
+
+    w1 = font.measure("tongue")
+    w2 = font.measure("pasta")
+    width = _PAD_X + w1 + w2 + _PAD_X
+
+    sw = root.winfo_screenwidth()
+    sh = root.winfo_screenheight()
+    x = sw - width - 16
+    y = sh - _HEIGHT - 56
+
+    win = tk.Toplevel(root)
+    win.overrideredirect(True)
+    win.attributes("-topmost", True)
+    win.attributes("-alpha", 0.95)
+    win.configure(bg="#111111")
+    win.geometry(f"{width}x{_HEIGHT}+{x}+{y}")
+
+    canvas = tk.Canvas(win, width=width, height=_HEIGHT,
+                       bg="#111111", highlightthickness=0)
+    canvas.pack()
+
+    cy = _HEIGHT // 2
+    canvas.create_text(_PAD_X,          cy, text="tongue", fill="#FF8C5A",
+                       font=font, anchor="w")
+    canvas.create_text(_PAD_X + w1,     cy, text="pasta",  fill="#FFD166",
+                       font=font, anchor="w")
+
+    def _close():
+        try:
+            win.destroy()
+        except Exception:
+            pass
+
+    root.after(2500, _close)
+
+
 def _show_error_popup(root, msg: str):
     popup_w = 380
     hdr_font = tkfont.Font(family=_FONT_FAMILY, size=12, weight="bold")
@@ -229,6 +267,8 @@ def _run():
                 elif msg == "hide":
                     state["running"] = False
                     root.withdraw()
+                elif msg == "startup":
+                    _show_startup_banner(root)
                 elif msg.startswith("trigger:"):
                     word = msg[len("trigger:"):]
                     _launch_corgi(root, word)
@@ -249,6 +289,10 @@ def push_audio(_chunk):
 
 def start():
     threading.Thread(target=_run, daemon=True).start()
+
+
+def startup():
+    _q.put("startup")
 
 
 def show():

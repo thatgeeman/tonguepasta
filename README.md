@@ -60,6 +60,22 @@ The app runs silently in the system tray (no console window).
 
 Right-click the tray icon to access all settings.
 
+## Status indicators
+
+A small overlay appears in the bottom-right corner of your screen during processing. Each label means:
+
+| Indicator | Color | What it means |
+|-----------|-------|---------------|
+| **REC** | Red | Microphone is active — speak now |
+| **LOCK** | Purple | Lock n Load mode — recording until you press Shift + Right Ctrl again |
+| **SAVE** | Orange | Saving the audio file (Lock n Load only) |
+| **TRNS** | Cyan | Transcribing your speech via the STT model |
+| **FORM** | Blue | Formatting the transcript as Markdown |
+| **IMPR** | Teal | Rewriting text with the active Improve mode |
+| **CAST** | Amber | Pasting the result into your app |
+
+The indicator disappears automatically once the text is pasted. Enable **Stealth mode** from the tray to hide all indicators.
+
 ## Tray menu
 
 | Item | What it does |
@@ -143,7 +159,23 @@ All settings live in `.env`:
 | `AUDIO_SILENCE_THRESHOLD` | RMS threshold for silence detection | `0.01` |
 | `AUDIO_SILENCE_DURATION` | Seconds of silence before auto-stop | `1.5` |
 
+## Clipboard
+
+Generated text is always copied to the clipboard before pasting. If the auto-paste or window refocus didn't fire, just press **Ctrl+V** manually — your text is there.
+
 ## Troubleshooting
+
+**Finding the log file**
+
+`tonguepasta.log` is written next to the executable. Check it first when something goes wrong — each pipeline step is logged with a timestamp.
+
+On Windows the default location is:
+```
+%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\tonguepasta.log
+```
+or wherever you placed the exe. Audio recordings (Lock n Load) are saved under `logs/mp3/` in the same folder.
+
+
 
 **Nothing happens when I hold Right Ctrl**
 - Check that `tonguepasta.exe` is running (system tray or Task Manager).
