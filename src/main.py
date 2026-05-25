@@ -268,6 +268,7 @@ def main():
     env_path = os.path.join(_base, ".env")
 
     overlay.start()
+    overlay.startup()
     tray.start(
         on_quit,
         on_reload_env=reload_env,
