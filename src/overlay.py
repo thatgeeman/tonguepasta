@@ -1,3 +1,4 @@
+import ctypes
 import math
 import queue
 import threading
@@ -212,6 +213,14 @@ def _run():
     root.attributes("-alpha", 0.95)
     root.configure(bg="#111111")
     root.withdraw()
+
+    # Prevent overlay from stealing keyboard focus from the source window
+    if _sys.platform == "win32":
+        _GWL_EXSTYLE = -20
+        _WS_EX_NOACTIVATE = 0x08000000
+        hwnd = root.winfo_id()
+        style = ctypes.windll.user32.GetWindowLongW(hwnd, _GWL_EXSTYLE)
+        ctypes.windll.user32.SetWindowLongW(hwnd, _GWL_EXSTYLE, style | _WS_EX_NOACTIVATE)
 
     font = tkfont.Font(family=_FONT_FAMILY, size=_FONT_SIZE, weight="bold")
 
