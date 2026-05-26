@@ -14,6 +14,8 @@ _base = os.path.dirname(sys.executable if getattr(sys, "frozen", False) else os.
 
 # 10-min chunks keep WAV under ~20MB (well within the 25MB Whisper limit)
 _MAX_CHUNK_SAMPLES = 10 * 60 * 16000
+# Whisper hallucinates on near-silent audio; skip transcription below this RMS
+_RMS_THRESHOLD = 0.02
 
 
 def _log(msg: str):
@@ -63,6 +65,10 @@ def transcribe(audio: np.ndarray, sample_rate: int = 16000) -> str:
     duration_s = audio.size / sample_rate
     rms = float(np.sqrt(np.mean(audio ** 2))) if audio.size > 0 else 0.0
     _log(f"audio: {duration_s:.2f}s, rms={rms:.5f}, samples={audio.size}")
+
+    if rms < _RMS_THRESHOLD:
+        _log(f"audio too quiet (rms={rms:.5f} < {_RMS_THRESHOLD}), skipping")
+        return ""
 
     if audio.size <= _MAX_CHUNK_SAMPLES:
         buf = _audio_to_wav_buf(audio, sample_rate)
