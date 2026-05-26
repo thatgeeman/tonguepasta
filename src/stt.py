@@ -15,7 +15,7 @@ _base = os.path.dirname(sys.executable if getattr(sys, "frozen", False) else os.
 # 10-min chunks keep WAV under ~20MB (well within the 25MB Whisper limit)
 _MAX_CHUNK_SAMPLES = 10 * 60 * 16000
 # Whisper hallucinates on near-silent audio; skip transcription below this RMS
-_RMS_THRESHOLD = 0.02
+_RMS_THRESHOLD = float(os.environ.get("STT_RMS_THRESHOLD", "0.01"))
 
 
 def _log(msg: str):
