@@ -16,7 +16,7 @@ jobs:
           - os: windows-latest
             platform: windows
             binary: tonguepasta.exe
-            hidden: pynput.keyboard._win32 pynput.mouse._win32
+            hidden: pynput.keyboard._win32 pynput.mouse._win32 wasapi_capture
           - os: macos-latest
             platform: macos
             binary: tonguepasta
