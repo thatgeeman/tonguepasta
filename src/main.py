@@ -136,10 +136,19 @@ def _start_recording(locked: bool = False):
                 audio_path = _save_audio_file(audio)
                 _log_write(f"saved: {audio_path}")
 
+            _log_write("transcribing...")
+
+            def _on_stt_status(status: str):
+                if private:
+                    return
+                if status == "ampg":
+                    overlay.amplifying()
+                elif status == "trns":
+                    overlay.transcribing()
+
             if not private:
                 overlay.transcribing()
-            _log_write("transcribing...")
-            text = transcribe(audio)
+            text = transcribe(audio, on_status=_on_stt_status)
             _log_write(f"transcribe done: {repr(text[:60]) if text else 'empty'}")
 
             mode = tray.get_mode()

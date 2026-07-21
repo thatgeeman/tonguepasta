@@ -1,11 +1,27 @@
 import ctypes
 import math
+import os
 import queue
+import sys as _sys
 import threading
 import tkinter as tk
 import tkinter.font as tkfont
 
 _q: queue.Queue = queue.Queue()
+
+_base = os.path.dirname(
+    _sys.executable if getattr(_sys, "frozen", False) else os.path.abspath(__file__)
+)
+
+
+def _log(msg: str):
+    try:
+        import datetime
+        ts = datetime.datetime.now().strftime("%H:%M:%S.%f")
+        with open(os.path.join(_base, "tonguepasta.log"), "a", encoding="utf-8") as f:
+            f.write(f"{ts} [overlay] {msg}\n")
+    except Exception:
+        pass
 
 _HEIGHT = 52
 _PAD_X = 18
@@ -13,7 +29,6 @@ _DOT_R = 11
 _DOT_GAP = 14
 _FONT_SIZE = 20
 
-import sys as _sys
 if _sys.platform == "darwin":
     _FONT_FAMILY = "Helvetica Neue"
 elif _sys.platform == "win32":
@@ -25,6 +40,7 @@ _STATES = {
     "rec":  {"text": "REC",  "lo": (170, 0,   0),   "hi": (255, 30,  30)},
     "lock": {"text": "LOCK", "lo": (100, 0,   160),  "hi": (180, 30,  255)},
     "save": {"text": "SAVE", "lo": (140, 80,  0),    "hi": (220, 140, 0)},
+    "ampg": {"text": "AMPG", "lo": (80,  120, 0),    "hi": (170, 240, 20)},
     "trns": {"text": "TRNS", "lo": (0,   100, 140),  "hi": (0,   180, 220)},
     "cast": {"text": "CAST", "lo": (160, 90,  0),    "hi": (255, 160, 0)},
     "form": {"text": "FORM", "lo": (40,  60,  180),  "hi": (90,  130, 255)},
@@ -214,6 +230,13 @@ def _run():
     root.configure(bg="#111111")
     root.withdraw()
 
+    # In a --noconsole build, Tk's default callback-exception handler writes to a
+    # missing stderr and hard-crashes the process with no log. Log instead.
+    def _report_cb_exc(exc, val, tb):
+        import traceback
+        _log("callback exception: " + "".join(traceback.format_exception(exc, val, tb)))
+    root.report_callback_exception = _report_cb_exc
+
     # Prevent overlay from stealing keyboard focus from the source window
     if _sys.platform == "win32":
         _GWL_EXSTYLE = -20
@@ -250,19 +273,25 @@ def _run():
         canvas.create_text(dx + _DOT_R + _DOT_GAP, cy,
                            text=cfg["text"], fill="white",
                            font=font, anchor="w")
-        return dot, cfg
+        return canvas, dot, cfg
 
-    state = {"key": None, "dot": None, "cfg": None, "tick": 0, "running": False}
+    state = {"key": None, "canvas": None, "dot": None, "cfg": None,
+             "tick": 0, "running": False}
 
     def animate():
-        if state["running"] and state["dot"]:
-            t = (math.sin(state["tick"] * 0.08) + 1) / 2
-            lo, hi = state["cfg"]["lo"], state["cfg"]["hi"]
-            r = int(lo[0] + (hi[0] - lo[0]) * t)
-            g = int(lo[1] + (hi[1] - lo[1]) * t)
-            b = int(lo[2] + (hi[2] - lo[2]) * t)
-            root.winfo_children()[-1].itemconfig(state["dot"], fill=_hex(r, g, b))
-            state["tick"] += 1
+        canvas = state["canvas"]
+        if state["running"] and state["dot"] and canvas is not None:
+            try:
+                if canvas.winfo_exists():
+                    t = (math.sin(state["tick"] * 0.08) + 1) / 2
+                    lo, hi = state["cfg"]["lo"], state["cfg"]["hi"]
+                    r = int(lo[0] + (hi[0] - lo[0]) * t)
+                    g = int(lo[1] + (hi[1] - lo[1]) * t)
+                    b = int(lo[2] + (hi[2] - lo[2]) * t)
+                    canvas.itemconfig(state["dot"], fill=_hex(r, g, b))
+                    state["tick"] += 1
+            except tk.TclError:
+                pass
         root.after(30, animate)
 
     def poll():
@@ -270,8 +299,9 @@ def _run():
             while True:
                 msg = _q.get_nowait()
                 if msg in _STATES:
-                    dot, cfg = make_window(msg)
-                    state.update(key=msg, dot=dot, cfg=cfg, tick=0, running=True)
+                    canvas, dot, cfg = make_window(msg)
+                    state.update(key=msg, canvas=canvas, dot=dot, cfg=cfg,
+                                 tick=0, running=True)
                     root.deiconify()
                 elif msg == "hide":
                     state["running"] = False
@@ -314,6 +344,10 @@ def show_locked():
 
 def transcribing():
     _q.put("trns")
+
+
+def amplifying():
+    _q.put("ampg")
 
 
 def saving():

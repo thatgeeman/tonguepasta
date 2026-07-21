@@ -36,6 +36,34 @@ No subscription. No cloud lock-in. Bring your own API key, or run fully local wi
 
 Grab the latest zip for your platform from the [Releases](../../releases) page, extract it, then follow the setup steps below.
 
+## Building from source
+
+Prefer a release build if one's available for your platform — this is for
+running against local changes or platforms without a prebuilt binary (e.g.
+older Linux without glibc 2.38+).
+
+```
+uv sync
+uv pip install pyinstaller
+```
+
+**Windows**
+```
+uv run powershell -File scripts/build.ps1
+```
+Produces `src\dist\tonguepasta.exe`.
+
+**macOS / Linux**
+```
+uv run bash scripts/build.sh
+```
+Produces `src/dist/tonguepasta`.
+
+To run straight from source without building a binary:
+```
+uv run src/main.py
+```
+
 ## Setup
 
 1. Copy `.env.example` to `.env` and fill in your API key and provider.
@@ -159,6 +187,9 @@ All settings live in `.env`:
 | `AUDIO_SAMPLE_RATE` | Microphone sample rate (Hz) | `16000` |
 | `AUDIO_SILENCE_THRESHOLD` | RMS threshold for silence detection | `0.01` |
 | `AUDIO_SILENCE_DURATION` | Seconds of silence before auto-stop | `1.5` |
+| `STT_RMS_THRESHOLD` | Minimum RMS level to send audio to STT | `0.01` |
+| `STT_NORMALIZE_TARGET_RMS` | Target RMS for amplifying quiet recordings before STT | `0.1` |
+| `STT_MAX_GAIN` | Maximum amplification multiplier before STT | `8.0` |
 
 ## Clipboard
 

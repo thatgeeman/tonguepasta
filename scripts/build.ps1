@@ -8,6 +8,7 @@ python -m PyInstaller --onefile --noconsole `
     --hidden-import pynput.keyboard._win32 `
     --hidden-import pynput.mouse._win32 `
     --hidden-import corrector `
+    --hidden-import wasapi_capture `
     --name tonguepasta `
     main.py
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

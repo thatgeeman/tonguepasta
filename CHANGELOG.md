@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Fixed
+- **Quiet recordings are amplified before transcription** (`stt.py`, `overlay.py`): Audio above
+  the silence threshold but below the target RMS is now boosted with clipping protection before
+  STT, and the overlay briefly shows `AMPG` when this happens.
 - **Overlay no longer steals keyboard focus** (`overlay.py`): Added `WS_EX_NOACTIVATE` extended
   window style to the tkinter root on Windows. Previously, each `deiconify()` call during the
   pipeline (REC, TRNS, CAST states) would activate the overlay and pull keyboard focus away from

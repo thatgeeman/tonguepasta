@@ -1,5 +1,6 @@
 import os
 import queue
+import sys
 import threading
 import time
 from collections import deque
@@ -17,6 +18,20 @@ _record_lock = threading.Lock()
 _stream: sd.InputStream | None = None
 _stream_lock = threading.Lock()
 
+_wasapi_available = sys.platform == "win32"
+_wasapi_fail_count = 0
+
+
+def _log(msg: str):
+    try:
+        import datetime
+        base = os.path.dirname(sys.executable if getattr(sys, "frozen", False) else os.path.abspath(__file__))
+        ts = datetime.datetime.now().strftime("%H:%M:%S.%f")
+        with open(os.path.join(base, "tonguepasta.log"), "a", encoding="utf-8") as f:
+            f.write(f"{ts} [audio] {msg}\n")
+    except Exception:
+        pass
+
 
 def _callback(indata, frames, _time, status):
     chunk = indata.copy()
@@ -30,7 +45,23 @@ def _callback(indata, frames, _time, status):
             pass
 
 
-def _open_stream() -> sd.InputStream:
+def _open_stream():
+    global _wasapi_available, _wasapi_fail_count
+    if _wasapi_available:
+        try:
+            import wasapi_capture
+            stream = wasapi_capture.WasapiCaptureStream(
+                callback=_callback, samplerate=SAMPLE_RATE, blocksize=BLOCK_SIZE,
+            )
+            stream.start()
+            _wasapi_fail_count = 0
+            return stream
+        except Exception as e:
+            _log(f"wasapi capture failed, falling back to sounddevice: {e}")
+            _wasapi_fail_count += 1
+            if _wasapi_fail_count >= 3:
+                _wasapi_available = False
+
     stream = sd.InputStream(
         samplerate=SAMPLE_RATE, channels=1, dtype="float32",
         blocksize=BLOCK_SIZE, callback=_callback,
