@@ -45,6 +45,7 @@ _STATES = {
     "cast": {"text": "CAST", "lo": (160, 90,  0),    "hi": (255, 160, 0)},
     "form": {"text": "FORM", "lo": (40,  60,  180),  "hi": (90,  130, 255)},
     "impr": {"text": "IMPR", "lo": (0,   120, 100),  "hi": (0,   210, 170)},
+    "setkey": {"text": "SET KEY", "lo": (120, 0, 120), "hi": (220, 40, 220)},
 }
 
 # Corgi colors
@@ -364,6 +365,10 @@ def formatting():
 
 def improving():
     _q.put("impr")
+
+
+def set_hotkey_prompt():
+    _q.put("setkey")
 
 
 def trigger_detected(word: str):

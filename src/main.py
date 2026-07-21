@@ -28,6 +28,7 @@ import numpy as np
 
 import config_editor
 import corrector
+import hotkeys
 import improver
 import output
 import overlay
@@ -41,12 +42,14 @@ from stt import transcribe
 
 output.set_log_path(os.path.join(_base, "tonguepasta.log"))
 
-HOTKEY = keyboard.Key.ctrl_r
-_SHIFT_KEYS = {keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r}
+_ENV_PATH = os.path.join(_base, ".env")
+
+_DEFAULT_HOTKEY = keyboard.Key.ctrl_r
 
 _recording = False
 _is_locked = False
 _shift_held = False
+_capturing_hotkey = False
 _stop_event: threading.Event | None = None
 _record_thread: threading.Thread | None = None
 _listener: keyboard.Listener | None = None
@@ -58,6 +61,21 @@ def _log_write(msg: str):
     ts = datetime.datetime.now().strftime("%H:%M:%S.%f")
     with open(os.path.join(_base, "tonguepasta.log"), "a", encoding="utf-8") as f:
         f.write(f"{ts} {msg}\n")
+
+
+def _load_hotkey() -> keyboard.Key:
+    spec = os.getenv("HOTKEY")
+    if not spec:
+        return _DEFAULT_HOTKEY
+    try:
+        return hotkeys.str_to_key(spec)
+    except ValueError as e:
+        _log_write(f"invalid HOTKEY '{spec}', falling back to default: {e}")
+        return _DEFAULT_HOTKEY
+
+
+HOTKEY = _load_hotkey()
+_SHIFT_KEYS = {keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r}
 
 
 def _save_audio_file(audio: np.ndarray, sample_rate: int = 16000) -> str:
@@ -224,8 +242,50 @@ def on_lock_n_load_tray():
         _stop_locked_recording()
 
 
+def _start_hotkey_capture():
+    global _capturing_hotkey, HOTKEY
+    if _capturing_hotkey:
+        return
+    _capturing_hotkey = True
+    overlay.set_hotkey_prompt()
+
+    def _capture():
+        global _capturing_hotkey, HOTKEY
+        captured = {}
+
+        def _on_press(k):
+            captured["key"] = k
+            return False
+
+        try:
+            listener = keyboard.Listener(on_press=_on_press)
+            listener.start()
+            listener.join(timeout=10)
+            if listener.is_alive():
+                listener.stop()
+        finally:
+            overlay.hide()
+            _capturing_hotkey = False
+
+        key = captured.get("key")
+        if key is None or key == keyboard.Key.esc:
+            _log_write("hotkey capture cancelled")
+            return
+
+        HOTKEY = key
+        key_str = hotkeys.key_to_str(key)
+        config_editor.set_env_var(_ENV_PATH, "HOTKEY", key_str)
+        tray.set_hotkey_display(hotkeys.display_name(key))
+        _log_write(f"hotkey set to {key_str}")
+
+    threading.Thread(target=_capture, daemon=True).start()
+
+
 def on_press(key):
     global _shift_held
+
+    if _capturing_hotkey:
+        return
 
     if key in _SHIFT_KEYS:
         _shift_held = True
@@ -247,6 +307,9 @@ def on_press(key):
 def on_release(key):
     global _recording, _shift_held
 
+    if _capturing_hotkey:
+        return
+
     if key in _SHIFT_KEYS:
         _shift_held = False
         return
@@ -260,9 +323,12 @@ def on_release(key):
 
 def reload_env():
     def _do_reload():
+        global HOTKEY
         _log_write("reload_env: reloading .env...")
-        load_dotenv(os.path.join(_base, ".env"), override=True)
+        load_dotenv(_ENV_PATH, override=True)
         providers.reset_clients()
+        HOTKEY = _load_hotkey()
+        tray.set_hotkey_display(hotkeys.display_name(HOTKEY))
         _log_write("reload_env: done")
     threading.Thread(target=_do_reload, daemon=True).start()
 
@@ -274,20 +340,25 @@ def main():
         if _listener:
             _listener.stop()
 
-    env_path = os.path.join(_base, ".env")
+    def _run_keyboard_listener(_icon):
+        global _listener
+        with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+            _listener = listener
+            listener.join()
 
     overlay.start()
     overlay.startup()
+    tray.set_hotkey_display(hotkeys.display_name(HOTKEY))
+    # Blocks the main thread until Quit is chosen; the keyboard listener runs
+    # in the thread pystray spawns for `setup` once its own loop is ready.
     tray.start(
         on_quit,
         on_reload_env=reload_env,
         on_lock_n_load=on_lock_n_load_tray,
-        on_configure=lambda: config_editor.open_config(env_path, reload_env),
+        on_configure=lambda: config_editor.open_config(_ENV_PATH, reload_env),
+        on_set_hotkey=_start_hotkey_capture,
+        setup=_run_keyboard_listener,
     )
-
-    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-        _listener = listener
-        listener.join()
 
 
 if __name__ == "__main__":

@@ -51,6 +51,11 @@ AUDIO_SILENCE_DURATION=1.5
 STT_NORMALIZE_TARGET_RMS=0.1
 # Maximum amplification multiplier. Peak headroom may reduce this further.
 STT_MAX_GAIN=8.0
+
+# ── Hotkey ───────────────────────────────────────────────────────────────────
+# Key used for hold-to-record (Shift+this key toggles Lock n Load). Set from the
+# tray menu's "Set Hotkey..." instead of editing this by hand.
+# HOTKEY=ctrl_r
 """
 
 
@@ -58,6 +63,25 @@ def _ensure_env(env_path: str):
     if not os.path.exists(env_path):
         with open(env_path, "w", encoding="utf-8") as f:
             f.write(_ENV_TEMPLATE)
+
+
+def set_env_var(env_path: str, key: str, value: str):
+    """Set KEY=value in the .env file, replacing an existing (even commented-out) line, else appending."""
+    _ensure_env(env_path)
+    with open(env_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    prefix = f"{key}="
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith(prefix) or stripped.startswith(f"# {prefix}"):
+            lines[i] = f"{prefix}{value}\n"
+            break
+    else:
+        lines.append(f"{prefix}{value}\n")
+
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
 
 
 def _open_editor(path: str):

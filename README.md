@@ -1,6 +1,6 @@
 # tonguepasta 😛🍝
 
-Hold **Right Ctrl**, speak, release — transcribed text is pasted wherever your cursor is. Works in any app on Windows, macOS, and Linux.
+Hold **Right Ctrl**, speak, release — transcribed text is pasted wherever your cursor is. Works in any app on Windows, macOS, and Linux. The hotkey is rebindable from the tray menu.
 
 No subscription. No cloud lock-in. Bring your own API key, or run fully local with Ollama.
 
@@ -31,6 +31,7 @@ No subscription. No cloud lock-in. Bring your own API key, or run fully local wi
   ```
   sudo apt install libayatana-appindicator3-1 libportaudio2
   ```
+- The tray menu opens on **left-click**, not right-click — this is a `pystray` limitation on Linux (both the AppIndicator and X11 backends only wire up the primary button), not an app bug.
 
 ## Download
 
@@ -87,7 +88,9 @@ The app runs silently in the system tray (no console window).
 | Hold Right Ctrl + speak + release | Transcribed text is pasted at the cursor |
 | Shift + Right Ctrl | Lock n Load - toggle recording on/off |
 
-Right-click the tray icon to access all settings.
+Right Ctrl is the default hotkey — rebind it anytime via the tray menu's "Set Hotkey...".
+
+Right-click the tray icon to access all settings (left-click on Linux — see platform notes above).
 
 ## Status indicators
 
@@ -114,6 +117,7 @@ The indicator disappears automatically once the text is pasted. Enable **Stealth
 | **Provider** | Switch AI provider live without restarting. |
 | **Stealth mode** | Hides the status overlay — no visual feedback while recording or transcribing. |
 | **Focus source window** | When enabled (default), focus returns to the original window after pasting. Disable if you want focus to stay where it lands. |
+| **Set Hotkey...** | Rebind the hold-to-record key. The overlay shows "SET KEY" — press any key to bind it (Shift + that key becomes the new Lock n Load toggle), or press Esc / wait 10s to cancel. Persists to `.env` and applies immediately. |
 | **Configure...** | Opens `.env` in a text editor. Save the file, then use Reload config to apply changes. |
 | **Reload config** | Reloads `.env` without restarting — use this after editing your API key or switching provider in the file. |
 | **Quit** | Exit the app. |
@@ -190,6 +194,7 @@ All settings live in `.env`:
 | `STT_RMS_THRESHOLD` | Minimum RMS level to send audio to STT | `0.01` |
 | `STT_NORMALIZE_TARGET_RMS` | Target RMS for amplifying quiet recordings before STT | `0.1` |
 | `STT_MAX_GAIN` | Maximum amplification multiplier before STT | `8.0` |
+| `HOTKEY` | Record hotkey spec (set via the tray's "Set Hotkey...", not meant to be hand-edited) | `ctrl_r` |
 
 ## Clipboard
 

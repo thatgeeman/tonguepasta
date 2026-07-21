@@ -58,6 +58,7 @@ _mode = "normal"
 _private = False
 _lock_n_load_active = False
 _on_lock_n_load_cb = None
+_hotkey_label = "Right Ctrl"
 
 
 def _draw_icon(bg: str, fg: str = "white", size: int = 64) -> Image.Image:
@@ -103,6 +104,13 @@ def get_private() -> bool:
     return _private
 
 
+def set_hotkey_display(name: str):
+    global _hotkey_label
+    _hotkey_label = name
+    if _icon:
+        _icon.title = _idle_title()
+
+
 def get_lock_n_load_active() -> bool:
     return _lock_n_load_active
 
@@ -133,7 +141,7 @@ def _idle_title() -> str:
     if _mode != "normal":
         parts.append(f"{_MODE_LABEL.get(_mode, _mode)} mode")
     suffix = f" [{', '.join(parts)}]" if parts else ""
-    return f"tonguepasta{suffix} - hold Right Ctrl to record"
+    return f"tonguepasta{suffix} - hold {_hotkey_label} to record"
 
 
 def _animate(lock_mode: bool = False):
@@ -165,7 +173,7 @@ def get_restore_focus() -> bool:
     return _restore_focus
 
 
-def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None):
+def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None, on_set_hotkey=None, setup=None):
     global _icon, _on_lock_n_load_cb
     _on_lock_n_load_cb = on_lock_n_load
 
@@ -180,6 +188,10 @@ def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None):
     def _configure(icon, _item):
         if on_configure:
             on_configure()
+
+    def _set_hotkey(icon, _item):
+        if on_set_hotkey:
+            on_set_hotkey()
 
     def _toggle_focus(icon, _item):
         global _restore_focus
@@ -248,6 +260,8 @@ def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None):
         ),
         pystray.Menu.SEPARATOR,
     ]
+    if on_set_hotkey:
+        items.append(pystray.MenuItem("Set Hotkey...", _set_hotkey))
     if on_configure:
         items.append(pystray.MenuItem("Configure...", _configure))
     if on_reload_env:
@@ -261,4 +275,14 @@ def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None):
         _idle_title(),
         menu,
     )
-    threading.Thread(target=_icon.run, daemon=True).start()
+
+    def _setup(icon):
+        icon.visible = True
+        if setup:
+            setup(icon)
+
+    # pystray's run() must be called from the main thread (required by the GTK
+    # backend on Linux; other backends tolerate it but this keeps behavior
+    # consistent). Anything that would otherwise block here belongs in `setup`,
+    # which pystray runs in its own thread once the icon loop is ready.
+    _icon.run(setup=_setup)

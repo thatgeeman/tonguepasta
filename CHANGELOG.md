@@ -2,7 +2,20 @@
 
 ## Unreleased
 
+### Added
+- **Rebindable record hotkey** (`hotkeys.py`, `main.py`, `tray.py`, `overlay.py`, `config_editor.py`):
+  Right-click the tray icon → "Set Hotkey..." to rebind the hold-to-record key on all platforms.
+  The new binding persists to `.env` (`HOTKEY=`) and is picked up automatically on the next launch.
+  Lock n Load stays `Shift + <hotkey>`, following the new binding. Press `Esc` or wait 10s to
+  cancel a capture without changing anything.
+
 ### Fixed
+- **Tray icon clicks (including menu open) could silently fail, most consistently on Linux**
+  (`tray.py`, `main.py`): pystray's `Icon.run()` was started on a background thread while the
+  main thread ran the keyboard listener. pystray requires `run()` on the main thread — its GTK
+  backend depends on the main-thread GLib loop to dispatch clicks. Restructured so `tray.start()`
+  blocks the main thread and the keyboard listener now runs inside pystray's `setup` callback
+  instead.
 - **Quiet recordings are amplified before transcription** (`stt.py`, `overlay.py`): Audio above
   the silence threshold but below the target RMS is now boosted with clipping protection before
   STT, and the overlay briefly shows `AMPG` when this happens.
