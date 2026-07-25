@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- **Selectable microphone input** (`audio.py`, `tray.py`, `main.py`): the tray menu now has
+  a `Microphone` submenu with a default option, per-device input choices, and a refresh action.
+  Selection is saved to `.env` as `AUDIO_INPUT_DEVICE` and applied immediately.
 - **Rebindable record hotkey** (`hotkeys.py`, `main.py`, `tray.py`, `overlay.py`, `config_editor.py`):
   Right-click the tray icon → "Set Hotkey..." to rebind the hold-to-record key on all platforms.
   The new binding persists to `.env` (`HOTKEY=`) and is picked up automatically on the next launch.
@@ -10,6 +13,10 @@
   cancel a capture without changing anything.
 
 ### Fixed
+- **Microphone input switches no longer require restarting the app** (`audio.py`,
+  `wasapi_capture.py`): the capture watchdog now tracks the active default input device,
+  refreshes the stream when Windows switches between laptop/headset microphones, and clears
+  stale pre-roll after reopening capture.
 - **Tray icon clicks (including menu open) could silently fail, most consistently on Linux**
   (`tray.py`, `main.py`): pystray's `Icon.run()` was started on a background thread while the
   main thread ran the keyboard listener. pystray requires `run()` on the main thread — its GTK

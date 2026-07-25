@@ -173,7 +173,16 @@ def get_restore_focus() -> bool:
     return _restore_focus
 
 
-def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None, on_set_hotkey=None, setup=None):
+def start(
+    on_quit,
+    on_reload_env=None,
+    on_lock_n_load=None,
+    on_configure=None,
+    on_set_hotkey=None,
+    on_set_input_device=None,
+    get_input_devices=None,
+    setup=None,
+):
     global _icon, _on_lock_n_load_cb
     _on_lock_n_load_cb = on_lock_n_load
 
@@ -201,6 +210,11 @@ def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None, o
         if _on_lock_n_load_cb:
             _on_lock_n_load_cb()
 
+    def _refresh_menu(icon=None, _item=None):
+        if _icon:
+            _icon.menu = _build_menu()
+            _icon.update_menu()
+
     def _mode_item(label, mode_val):
         def action(icon, item):
             _set_mode(mode_val)
@@ -215,65 +229,94 @@ def start(on_quit, on_reload_env=None, on_lock_n_load=None, on_configure=None, o
             return providers.get_active_provider() == key
         return pystray.MenuItem(label, action, checked=is_checked, radio=True)
 
-    improve_submenu = pystray.Menu(
-        _mode_item("Grammar",       "improve:grammar"),
-        _mode_item("Professional",  "improve:professional"),
-        _mode_item("Concise",       "improve:concise"),
-        _mode_item("Casual",        "improve:casual"),
-        _mode_item("Caveman",       "improve:caveman"),
-    )
+    def _input_device_item(device):
+        device_id = str(device["id"])
+        label = str(device["label"])
 
-    mode_submenu = pystray.Menu(
-        _mode_item("Normal",    "normal"),
-        _mode_item("Markdown",  "markdown"),
-        pystray.MenuItem(
-            "Improve",
-            improve_submenu,
-            checked=lambda item: _mode.startswith("improve:"),
-        ),
-    )
+        def action(icon, item):
+            if on_set_input_device:
+                on_set_input_device(device_id)
+            _refresh_menu(icon, item)
 
-    provider_submenu = pystray.Menu(
-        _provider_item("Azure OpenAI",   "azure"),
-        _provider_item("OpenAI",         "openai"),
-        _provider_item("Custom / Local", "custom"),
-    )
+        def is_checked(item):
+            return bool(device.get("selected"))
 
-    items = [
-        pystray.MenuItem(
-            "Lock n Load",
-            _lock_n_load_click,
-            checked=lambda item: _lock_n_load_active,
-        ),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem("Mode", mode_submenu),
-        pystray.MenuItem("Provider", provider_submenu),
-        pystray.MenuItem(
-            "Stealth mode",
-            _toggle_private,
-            checked=lambda item: _private,
-        ),
-        pystray.MenuItem(
-            "Focus source window",
-            _toggle_focus,
-            checked=lambda _item: _restore_focus,
-        ),
-        pystray.Menu.SEPARATOR,
-    ]
-    if on_set_hotkey:
-        items.append(pystray.MenuItem("Set Hotkey...", _set_hotkey))
-    if on_configure:
-        items.append(pystray.MenuItem("Configure...", _configure))
-    if on_reload_env:
-        items.append(pystray.MenuItem("Reload config", _reload))
-    items.append(pystray.MenuItem("Quit", _quit))
+        return pystray.MenuItem(label, action, checked=is_checked, radio=True)
 
-    menu = pystray.Menu(*items)
+    def _microphone_submenu():
+        items = []
+        if get_input_devices:
+            items.extend(_input_device_item(device) for device in get_input_devices())
+        if len(items) == 0:
+            items.append(pystray.MenuItem("No input devices found", lambda icon, item: None, enabled=False))
+        items.append(pystray.Menu.SEPARATOR)
+        items.append(pystray.MenuItem("Refresh microphone list", _refresh_menu))
+        return pystray.Menu(*items)
+
+    def _build_menu():
+        improve_submenu = pystray.Menu(
+            _mode_item("Grammar",       "improve:grammar"),
+            _mode_item("Professional",  "improve:professional"),
+            _mode_item("Concise",       "improve:concise"),
+            _mode_item("Casual",        "improve:casual"),
+            _mode_item("Caveman",       "improve:caveman"),
+        )
+
+        mode_submenu = pystray.Menu(
+            _mode_item("Normal",    "normal"),
+            _mode_item("Markdown",  "markdown"),
+            pystray.MenuItem(
+                "Improve",
+                improve_submenu,
+                checked=lambda item: _mode.startswith("improve:"),
+            ),
+        )
+
+        provider_submenu = pystray.Menu(
+            _provider_item("Azure OpenAI",   "azure"),
+            _provider_item("OpenAI",         "openai"),
+            _provider_item("Custom / Local", "custom"),
+        )
+
+        items = [
+            pystray.MenuItem(
+                "Lock n Load",
+                _lock_n_load_click,
+                checked=lambda item: _lock_n_load_active,
+            ),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Mode", mode_submenu),
+            pystray.MenuItem("Provider", provider_submenu),
+        ]
+        if on_set_input_device and get_input_devices:
+            items.append(pystray.MenuItem("Microphone", _microphone_submenu()))
+        items.extend([
+            pystray.MenuItem(
+                "Stealth mode",
+                _toggle_private,
+                checked=lambda item: _private,
+            ),
+            pystray.MenuItem(
+                "Focus source window",
+                _toggle_focus,
+                checked=lambda _item: _restore_focus,
+            ),
+            pystray.Menu.SEPARATOR,
+        ])
+        if on_set_hotkey:
+            items.append(pystray.MenuItem("Set Hotkey...", _set_hotkey))
+        if on_configure:
+            items.append(pystray.MenuItem("Configure...", _configure))
+        if on_reload_env:
+            items.append(pystray.MenuItem("Reload config", _reload))
+        items.append(pystray.MenuItem("Quit", _quit))
+        return pystray.Menu(*items)
+
     _icon = pystray.Icon(
         "tonguepasta",
         _IDLE_IMG,
         _idle_title(),
-        menu,
+        _build_menu(),
     )
 
     def _setup(icon):

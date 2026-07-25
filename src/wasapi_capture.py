@@ -170,6 +170,16 @@ class IMMDevice(IUnknown):
             (['in'], c_void_p, 'pActivationParams'),
             (['out'], POINTER(POINTER(IAudioClient2)), 'ppInterface'),
         ),
+        COMMETHOD([], HRESULT, "OpenPropertyStore",
+            (['in'], DWORD, 'stgmAccess'),
+            (['out'], POINTER(c_void_p), 'ppProperties'),
+        ),
+        COMMETHOD([], HRESULT, "GetId",
+            (['out'], POINTER(ctypes.c_wchar_p), 'ppstrId'),
+        ),
+        COMMETHOD([], HRESULT, "GetState",
+            (['out'], POINTER(DWORD), 'pdwState'),
+        ),
     ]
 
 
@@ -243,6 +253,45 @@ class _Blockizer:
 
 # ---- public capture stream ----
 
+def _capture_device_id(device) -> str:
+    device_id = device.GetId()
+    try:
+        if isinstance(device_id, str):
+            return device_id
+        if hasattr(device_id, "value"):
+            return str(device_id.value)
+        return ctypes.wstring_at(device_id)
+    finally:
+        if device_id and not isinstance(device_id, str):
+            try:
+                ctypes.windll.ole32.CoTaskMemFree(device_id)
+            except Exception:
+                pass
+
+
+def get_default_capture_signature() -> tuple[str, str] | None:
+    """Return a stable signature for the current default Windows input device."""
+    try:
+        comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+    except Exception:
+        pass
+
+    try:
+        enumerator = comtypes.CoCreateInstance(
+            CLSID_MMDeviceEnumerator, interface=IMMDeviceEnumerator, clsctx=CLSCTX_ALL,
+        )
+        device = enumerator.GetDefaultAudioEndpoint(eCapture, eConsole)
+        return ("wasapi", _capture_device_id(device))
+    except Exception as e:
+        _log(f"default capture signature failed: {e}")
+        return None
+    finally:
+        try:
+            comtypes.CoUninitialize()
+        except Exception:
+            pass
+
+
 class WasapiCaptureStream:
     """Duck-typed against the sounddevice.InputStream surface audio.py uses:
     .start(), .active, .close()."""
@@ -256,6 +305,7 @@ class WasapiCaptureStream:
         self._init_error = None
         self._active = False
         self._thread = None
+        self.device_signature: tuple[str, str] | None = None
 
     def start(self):
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -288,6 +338,7 @@ class WasapiCaptureStream:
                 CLSID_MMDeviceEnumerator, interface=IMMDeviceEnumerator, clsctx=CLSCTX_ALL,
             )
             device = enumerator.GetDefaultAudioEndpoint(eCapture, eConsole)
+            self.device_signature = ("wasapi", _capture_device_id(device))
             client2 = device.Activate(IID_IAudioClient2, CLSCTX_ALL, None)
 
             # NOTE: previously tagged eCategory=AudioCategory_Communications here to test

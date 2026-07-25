@@ -115,6 +115,7 @@ The indicator disappears automatically once the text is pasted. Enable **Stealth
 | **Lock n Load** | Toggle continuous recording on/off (instead of hold-to-record). Shift + Right Ctrl does the same from the keyboard. |
 | **Mode** | Switch transcription mode: Normal, Markdown, or one of the Improve presets (Grammar, Professional, Concise, Casual, Caveman). |
 | **Provider** | Switch AI provider live without restarting. |
+| **Microphone** | Select the input device directly, or refresh the microphone list after plugging in a headset. |
 | **Stealth mode** | Hides the status overlay — no visual feedback while recording or transcribing. |
 | **Focus source window** | When enabled (default), focus returns to the original window after pasting. Disable if you want focus to stay where it lands. |
 | **Set Hotkey...** | Rebind the hold-to-record key. The overlay shows "SET KEY" — press any key to bind it (Shift + that key becomes the new Lock n Load toggle), or press Esc / wait 10s to cancel. Persists to `.env` and applies immediately. |
@@ -188,6 +189,7 @@ All settings live in `.env`:
 | `AZURE_API_VERSION` | Azure API version | `2025-01-01-preview` |
 | `AZURE_DEPLOYMENT` | Azure STT model name | `whisper` |
 | `AZURE_CORRECT_DEPLOYMENT` | Azure chat model name | `gpt-4o-mini` |
+| `AUDIO_INPUT_DEVICE` | Selected microphone device ID (set from tray Microphone menu) | `default` |
 | `AUDIO_SAMPLE_RATE` | Microphone sample rate (Hz) | `16000` |
 | `AUDIO_SILENCE_THRESHOLD` | RMS threshold for silence detection | `0.01` |
 | `AUDIO_SILENCE_DURATION` | Seconds of silence before auto-stop | `1.5` |

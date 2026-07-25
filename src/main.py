@@ -26,6 +26,7 @@ load_dotenv(os.path.join(_base, ".env"))
 import ctypes
 import numpy as np
 
+import audio
 import config_editor
 import corrector
 import hotkeys
@@ -35,7 +36,6 @@ import overlay
 import providers
 import stt
 import tray
-from audio import record_while_held
 from formatter import format_markdown, is_markdown
 from output import send_text
 from stt import transcribe
@@ -136,12 +136,12 @@ def _start_recording(locked: bool = False):
     def run():
         try:
             _log_write("recording started" + (" [LOCK N LOAD]" if locked else ""))
-            audio = record_while_held(_stop_event)
+            audio_data = audio.record_while_held(_stop_event)
             tray.set_recording(False)
             if locked:
                 tray.set_lock_n_load_active(False)
-            _log_write(f"recording done, samples={audio.size}")
-            if audio.size < 1600:
+            _log_write(f"recording done, samples={audio_data.size}")
+            if audio_data.size < 1600:
                 overlay.hide()
                 return
 
@@ -149,9 +149,9 @@ def _start_recording(locked: bool = False):
             if locked:
                 if not private:
                     overlay.saving()
-                duration_s = audio.size / 16000
+                duration_s = audio_data.size / 16000
                 _log_write(f"saving audio ({duration_s:.0f}s)...")
-                audio_path = _save_audio_file(audio)
+                audio_path = _save_audio_file(audio_data)
                 _log_write(f"saved: {audio_path}")
 
             _log_write("transcribing...")
@@ -166,7 +166,7 @@ def _start_recording(locked: bool = False):
 
             if not private:
                 overlay.transcribing()
-            text = transcribe(audio, on_status=_on_stt_status)
+            text = transcribe(audio_data, on_status=_on_stt_status)
             _log_write(f"transcribe done: {repr(text[:60]) if text else 'empty'}")
 
             mode = tray.get_mode()
@@ -281,6 +281,13 @@ def _start_hotkey_capture():
     threading.Thread(target=_capture, daemon=True).start()
 
 
+def _set_audio_input_device(device_id: str):
+    os.environ["AUDIO_INPUT_DEVICE"] = device_id
+    config_editor.set_env_var(_ENV_PATH, "AUDIO_INPUT_DEVICE", device_id)
+    audio.refresh_stream(f"selected input device changed to {device_id}")
+    _log_write(f"audio input device set to {device_id}")
+
+
 def on_press(key):
     global _shift_held
 
@@ -329,6 +336,7 @@ def reload_env():
         providers.reset_clients()
         HOTKEY = _load_hotkey()
         tray.set_hotkey_display(hotkeys.display_name(HOTKEY))
+        audio.refresh_stream("reload_env")
         _log_write("reload_env: done")
     threading.Thread(target=_do_reload, daemon=True).start()
 
@@ -357,6 +365,8 @@ def main():
         on_lock_n_load=on_lock_n_load_tray,
         on_configure=lambda: config_editor.open_config(_ENV_PATH, reload_env),
         on_set_hotkey=_start_hotkey_capture,
+        on_set_input_device=_set_audio_input_device,
+        get_input_devices=audio.list_input_devices,
         setup=_run_keyboard_listener,
     )
 

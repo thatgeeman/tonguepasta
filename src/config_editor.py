@@ -42,6 +42,9 @@ OPENAI_API_KEY=sk-...
 # CHAT_MODEL=
 
 # ── Audio ────────────────────────────────────────────────────────────────────
+# Selected input device. Use the tray menu's "Microphone" submenu instead of
+# editing this by hand.
+AUDIO_INPUT_DEVICE=default
 AUDIO_SAMPLE_RATE=16000
 AUDIO_SILENCE_THRESHOLD=0.01
 AUDIO_SILENCE_DURATION=1.5
