@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- **Simplified microphone choices** (`audio.py`): the tray shows each physical input once and
+  automatically prefers the MME driver on Windows, avoiding redundant DirectSound and WASAPI
+  entries for the same device.
 - **Selectable microphone input** (`audio.py`, `tray.py`, `main.py`): the tray menu now has
   a `Microphone` submenu with a default option, per-device input choices, and a refresh action.
   Selection is saved to `.env` as `AUDIO_INPUT_DEVICE` and applied immediately.

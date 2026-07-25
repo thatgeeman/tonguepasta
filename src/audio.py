@@ -193,6 +193,19 @@ def refresh_stream(reason: str = "input device changed"):
         _refresh_stream(reason)
 
 
+def _hostapi_priority(hostapi_name: str) -> int:
+    """Prefer one stable backend when an input is exposed more than once."""
+    preferences = {
+        "win32": ["MME", "Windows WASAPI", "Windows DirectSound", "Windows WDM-KS"],
+        "darwin": ["Core Audio"],
+        "linux": ["PipeWire", "PulseAudio", "ALSA", "JACK"],
+    }
+    try:
+        return preferences.get(sys.platform, []).index(hostapi_name)
+    except ValueError:
+        return len(preferences.get(sys.platform, []))
+
+
 def list_input_devices() -> list[dict[str, object]]:
     selected_id = _selected_input_device_id()
     devices: list[dict[str, object]] = [
@@ -205,6 +218,7 @@ def list_input_devices() -> list[dict[str, object]]:
     try:
         hostapis = sd.query_hostapis()
         default_index = _sounddevice_default_input_index()
+        candidates: dict[str, tuple[int, int, str, str, bool]] = {}
         for index, device in enumerate(sd.query_devices()):
             if int(device.get("max_input_channels", 0)) <= 0:
                 continue
@@ -222,7 +236,22 @@ def list_input_devices() -> list[dict[str, object]]:
                 else "Unknown"
             )
             name = str(device.get("name", f"Input {index}"))
-            suffix = " (default)" if index == default_index else ""
+            # Windows' Sound Mapper is only an alias for the Default input item.
+            if sys.platform == "win32" and name.casefold().startswith("microsoft sound mapper"):
+                continue
+            key = name.casefold()
+            candidate = (
+                _hostapi_priority(hostapi_name), index, name, hostapi_name,
+                index == default_index,
+            )
+            existing = candidates.get(key)
+            if existing is None or candidate[0] < existing[0]:
+                candidates[key] = candidate
+
+        for _priority, index, name, hostapi_name, is_default in sorted(
+            candidates.values(), key=lambda candidate: (not candidate[4], candidate[2].casefold()),
+        ):
+            suffix = " (default)" if is_default else ""
             device_id = str(index)
             devices.append({
                 "id": device_id,
