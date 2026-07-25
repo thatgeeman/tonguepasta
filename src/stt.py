@@ -139,7 +139,9 @@ def transcribe(audio: np.ndarray, sample_rate: int = 16000, on_status=None) -> s
     rms = float(np.sqrt(np.mean(audio ** 2))) if audio.size > 0 else 0.0
     _log(f"audio: {duration_s:.2f}s, rms={rms:.5f}, samples={audio.size}")
 
-    rms_threshold = _env_float("STT_RMS_THRESHOLD", 0.01)
+    # USB headset microphones commonly produce speech around 0.004-0.008 RMS.
+    # Keep rejecting near-silence while allowing normalization to handle low gain.
+    rms_threshold = _env_float("STT_RMS_THRESHOLD", 0.003)
     if rms < rms_threshold:
         _log(f"audio too quiet (rms={rms:.5f} < {rms_threshold}), skipping")
         return ""
