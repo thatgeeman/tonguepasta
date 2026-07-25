@@ -193,7 +193,7 @@ All settings live in `.env`:
 | `AUDIO_SAMPLE_RATE` | Microphone sample rate (Hz) | `16000` |
 | `AUDIO_SILENCE_THRESHOLD` | RMS threshold for silence detection | `0.01` |
 | `AUDIO_SILENCE_DURATION` | Seconds of silence before auto-stop | `1.5` |
-| `STT_RMS_THRESHOLD` | Minimum RMS level to send audio to STT | `0.01` |
+| `STT_RMS_THRESHOLD` | Minimum RMS level to send audio to STT | `0.003` |
 | `STT_NORMALIZE_TARGET_RMS` | Target RMS for amplifying quiet recordings before STT | `0.1` |
 | `STT_MAX_GAIN` | Maximum amplification multiplier before STT | `8.0` |
 | `HOTKEY` | Record hotkey spec (set via the tray's "Set Hotkey...", not meant to be hand-edited) | `ctrl_r` |

@@ -178,9 +178,12 @@ def _refresh_stream(reason: str):
     old_stream = _stream
     if old_stream is not None:
         _log(f"refreshing capture stream: {reason}")
-    _close_stream(old_stream)
     signature = _default_capture_signature()
-    _stream = _open_stream(expected_signature=signature)
+    # Open the replacement first. Some drivers reject an input stream at the
+    # requested format, and a bad tray-menu choice must not silence capture.
+    replacement_stream = _open_stream(expected_signature=signature)
+    _stream = replacement_stream
+    _close_stream(old_stream)
     _pre_roll.clear()
     _last_chunk_at = time.monotonic()
 
@@ -204,6 +207,13 @@ def list_input_devices() -> list[dict[str, object]]:
         default_index = _sounddevice_default_input_index()
         for index, device in enumerate(sd.query_devices()):
             if int(device.get("max_input_channels", 0)) <= 0:
+                continue
+            try:
+                sd.check_input_settings(
+                    device=index, channels=1, samplerate=SAMPLE_RATE,
+                )
+            except Exception as e:
+                _log(f"skipping unsupported input device {index}: {e}")
                 continue
             hostapi_index = int(device.get("hostapi", -1))
             hostapi_name = (

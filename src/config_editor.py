@@ -49,7 +49,7 @@ AUDIO_SAMPLE_RATE=16000
 AUDIO_SILENCE_THRESHOLD=0.01
 AUDIO_SILENCE_DURATION=1.5
 # Minimum RMS level to attempt transcription.
-# STT_RMS_THRESHOLD=0.01
+# STT_RMS_THRESHOLD=0.003
 # Quiet recordings above STT_RMS_THRESHOLD are amplified toward this RMS before STT.
 STT_NORMALIZE_TARGET_RMS=0.1
 # Maximum amplification multiplier. Peak headroom may reduce this further.

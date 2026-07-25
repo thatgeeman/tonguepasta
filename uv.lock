@@ -1089,7 +1089,7 @@ wheels = [
 
 [[package]]
 name = "tonguepasta"
-version = "1.0.6"
+version = "1.0.7"
 source = { virtual = "." }
 dependencies = [
     { name = "comtypes", marker = "sys_platform == 'win32'" },

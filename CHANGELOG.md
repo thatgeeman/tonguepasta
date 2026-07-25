@@ -13,6 +13,9 @@
   cancel a capture without changing anything.
 
 ### Fixed
+- **Low-gain headset microphones are transcribed** (`stt.py`, `audio.py`, `main.py`): lowered
+  the speech cutoff to `0.003` RMS before amplification, excluded microphone options that cannot
+  open at the configured sample rate, and retain the prior stream if a new selection fails.
 - **Microphone input switches no longer require restarting the app** (`audio.py`,
   `wasapi_capture.py`): the capture watchdog now tracks the active default input device,
   refreshes the stream when Windows switches between laptop/headset microphones, and clears

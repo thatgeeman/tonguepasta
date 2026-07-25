@@ -282,10 +282,17 @@ def _start_hotkey_capture():
 
 
 def _set_audio_input_device(device_id: str):
+    previous_device_id = os.environ.get("AUDIO_INPUT_DEVICE", "default")
     os.environ["AUDIO_INPUT_DEVICE"] = device_id
+    try:
+        audio.refresh_stream(f"selected input device changed to {device_id}")
+    except Exception as e:
+        os.environ["AUDIO_INPUT_DEVICE"] = previous_device_id
+        _log_write(f"audio input device {device_id} rejected: {e}")
+        return False
     config_editor.set_env_var(_ENV_PATH, "AUDIO_INPUT_DEVICE", device_id)
-    audio.refresh_stream(f"selected input device changed to {device_id}")
     _log_write(f"audio input device set to {device_id}")
+    return True
 
 
 def on_press(key):
